@@ -54,7 +54,6 @@ try:
 			else:
 				return idaapi.AST_DISABLE_FOR_FORM
 
-	# context menu for Patcher
 	class Searcher(Kp_Menu_Context):
 		def activate(self, ctx):
 			self.plugin.search()
@@ -82,14 +81,14 @@ p_initialized = False
 
 
 class YaraSearchResultChooser(idaapi.Choose2):
-    def __init__(self, title, items, flags=0, width=None, height=None, embedded=False, modal=False):        
+    def __init__(self, title, items, flags=0, width=None, height=None, embedded=False, modal=False):
         Choose2.__init__(
             self,
             title,
             [
-            	["Address", idaapi.Choose2.CHCOL_HEX|10],
-            	["Name", idaapi.Choose2.CHCOL_PLAIN|40],
-            	["Value", idaapi.Choose2.CHCOL_PLAIN|40],
+                ["Address", idaapi.Choose2.CHCOL_HEX|10],
+                ["Name", idaapi.Choose2.CHCOL_PLAIN|40],
+                ["Value", idaapi.Choose2.CHCOL_PLAIN|40],
             ],
             flags = flags,
             width = width,
