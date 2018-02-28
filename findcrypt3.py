@@ -80,7 +80,7 @@ p_initialized = False
 
 class YaraSearchResultChooser(idaapi.Choose2):
     def __init__(self, title, items, flags=0, width=None, height=None, embedded=False, modal=False):
-        Choose2.__init__(
+        idaapi.Choose2.__init__(
             self,
             title,
             [
