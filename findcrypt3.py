@@ -5,6 +5,7 @@ import idautils
 import idc
 import operator
 import yara
+import os
 
 VERSION = "0.2"
 YARARULES_CFGFILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "findcrypt3.rules")
