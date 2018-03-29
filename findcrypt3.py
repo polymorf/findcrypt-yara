@@ -160,7 +160,7 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
     def toVirtualAddress(self, offset, segments):
         va_offset = 0
         for seg in segments:
-            if seg[1] < offset < seg[2]:
+            if seg[1] <= offset < seg[2]:
                 va_offset = seg[0] + (offset - seg[1])
         return va_offset
 
@@ -179,12 +179,13 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
             name = match.rule
             #print "%s => %d matches" % (name, len(match.strings))
             for string in match.strings:
-                #print "\t 0x%08x : %s" % (self.toVirtualAddress(string[0],offsets),repr(string[2]))
+                # print "\t 0x%08x : %s" % (self.toVirtualAddress(string[0],offsets),repr(string[2]))
                 value = [
                     self.toVirtualAddress(string[0], offsets),
                     name,
                     repr(string[2]),
                 ]
+                idc.set_name(value[0], name, 0)
                 values.append(value)
         print "<<< end yara search"
         return values
