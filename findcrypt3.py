@@ -105,7 +105,7 @@ class YaraSearchResultChooser(idaapi.Choose2):
 
     def OnGetLine(self, n):
         res = self.items[n]
-        res = [atoa(res[0]), res[1], res[2]]
+        res = [idc.atoa(res[0]), res[1], res[2]]
         return res
 
     def OnGetSize(self):
