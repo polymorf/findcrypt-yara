@@ -1433,3 +1433,36 @@ rule DCP_DES_EncryptECB {
 		any of them
 }
 
+rule TEA_DELTA2 {
+	meta:
+		author = "_pusher_"
+		description = "TEA DELTA"
+		date = "2016-02"
+	strings:
+		$c0 = { 9E 37 79 B9 }
+	condition:
+		any of them
+}
+
+rule TEA_DELTA {
+	meta:
+		author = "_pusher_"
+		description = "TEA DELTA"
+		date = "2016-02"
+	strings:
+		$c0 = { B9 79 37 9E }
+	condition:
+		any of them
+}
+
+rule TEA_SUM {
+	meta:
+		author = "_pusher_"
+		description = "TEA SUM"
+		date = "2016-02"
+	strings:
+		$c0 = { 90 9B 77 E3 }
+	condition:
+		any of them
+}
+
