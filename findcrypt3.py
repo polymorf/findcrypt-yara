@@ -187,7 +187,7 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
                     string[1],
                     repr(string[2]),
                 ]
-                # idc.set_name(value[0], name, 0)
+                idc.set_name(value[0], name, 0)
                 values.append(value)
         print "<<< end yara search"
         return values
