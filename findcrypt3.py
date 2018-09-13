@@ -177,17 +177,25 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
         values = list()
         matches = rules.match(data=memory)
         for match in matches:
-            name = match.rule
             #print "%s => %d matches" % (name, len(match.strings))
             for string in match.strings:
                 # print "\t 0x%08x : %s" % (self.toVirtualAddress(string[0],offsets),repr(string[2]))
+                name = match.rule
+                try:
+                    if name.endswith("_API"):
+                        name = name + "_" + idc.GetString(self.toVirtualAddress(string[0], offsets))
+                except:
+                    pass
                 value = [
                     self.toVirtualAddress(string[0], offsets),
-                    name,
+                    name + "_" + hex(self.toVirtualAddress(string[0], offsets)).lstrip("0x").rstrip("L").upper(),
                     string[1],
                     repr(string[2]),
                 ]
-                idc.set_name(value[0], name, 0)
+                idc.set_name(value[0], name
+                             + "_"
+                             + hex(self.toVirtualAddress(string[0], offsets)).lstrip("0x").rstrip("L").upper()
+                             , 0)
                 values.append(value)
         print "<<< end yara search"
         return values
