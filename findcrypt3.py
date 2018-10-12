@@ -192,7 +192,7 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
                     string[1],
                     repr(string[2]),
                 ]
-                idc.set_name(value[0], name
+                idaapi.set_name(value[0], name
                              + "_"
                              + hex(self.toVirtualAddress(string[0], offsets)).lstrip("0x").rstrip("L").upper()
                              , 0)
