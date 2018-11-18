@@ -181,11 +181,11 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
             for string in match.strings:
                 # print "\t 0x%08x : %s" % (self.toVirtualAddress(string[0],offsets),repr(string[2]))
                 name = match.rule
-                try:
-                    if name.endswith("_API"):
+                if name.endswith("_API"):
+                    try:
                         name = name + "_" + idc.GetString(self.toVirtualAddress(string[0], offsets))
-                except:
-                    pass
+                    except:
+                        pass
                 value = [
                     self.toVirtualAddress(string[0], offsets),
                     name + "_" + hex(self.toVirtualAddress(string[0], offsets)).lstrip("0x").rstrip("L").upper(),
