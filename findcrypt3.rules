@@ -1440,6 +1440,7 @@ rule TEA_DELTA2 {
 		date = "2016-02"
 	strings:
 		$c0 = { 9E 37 79 B9 }
+		$c1 = { 61 C8 86 47 }
 	condition:
 		any of them
 }
@@ -1451,6 +1452,7 @@ rule TEA_DELTA {
 		date = "2016-02"
 	strings:
 		$c0 = { B9 79 37 9E }
+		$c1 = { 47 86 C8 61 }
 	condition:
 		any of them
 }
