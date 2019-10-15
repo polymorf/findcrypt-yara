@@ -163,9 +163,7 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
         print(">>> start yara search")
         values = list()
         matches = rules.match(data=memory)
-        #matches = rules.match(data="CryptBinaryToStringA crypt32.dll")
         for match in matches:
-            print(match.rule)
             for string in match.strings:
                 name = match.rule
                 if name.endswith("_API"):
