@@ -2,6 +2,7 @@
 
 import idaapi
 import idautils
+import ida_bytes
 import idc
 import operator
 import yara
@@ -49,8 +50,8 @@ try:
         @classmethod
         def update(self, ctx):
             if ctx.form_type == idaapi.BWN_DISASM:
-                return idaapi.AST_ENABLE_FOR_FORM
-            return idaapi.AST_DISABLE_FOR_FORM
+                return idaapi.AST_ENABLE_FOR_WIDGET
+            return idaapi.AST_DISABLE_FOR_WIDGET
 
     class Searcher(Kp_Menu_Context):
         def activate(self, ctx):
@@ -60,34 +61,20 @@ try:
 except:
     pass
 
-def lrange(num1, num2=None, step=1):
-    op = operator.__lt__
-    if num2 is None:
-        num1, num2 = 0, num1
-    if num2 < num1:
-        if step > 0:
-            num1 = num2
-        op = operator.__gt__
-    elif step < 0:
-        num1 = num2
-    while op(num1, num2):
-        yield num1
-        num1 += step
-
+	
 p_initialized = False
 
 
-
-class YaraSearchResultChooser(idaapi.Choose2):
+class YaraSearchResultChooser(idaapi.Choose):
     def __init__(self, title, items, flags=0, width=None, height=None, embedded=False, modal=False):
-        idaapi.Choose2.__init__(
+        idaapi.Choose.__init__(
             self,
             title,
             [
-                ["Address", idaapi.Choose2.CHCOL_HEX|10],
-                ["Name", idaapi.Choose2.CHCOL_PLAIN|25],
-                ["String", idaapi.Choose2.CHCOL_PLAIN|25],
-                ["Value", idaapi.Choose2.CHCOL_PLAIN|40],
+                ["Address", idaapi.Choose.CHCOL_HEX|10],
+                ["Name", idaapi.Choose.CHCOL_PLAIN|25],
+                ["String", idaapi.Choose.CHCOL_PLAIN|25],
+                ["Value", idaapi.Choose.CHCOL_PLAIN|40],
             ],
             flags=flags,
             width=width,
@@ -173,13 +160,11 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
         r = c.show()
 
     def yarasearch(self, memory, offsets, rules):
-        print ">>> start yara search"
+        print(">>> start yara search")
         values = list()
         matches = rules.match(data=memory)
         for match in matches:
-            #print "%s => %d matches" % (name, len(match.strings))
             for string in match.strings:
-                # print "\t 0x%08x : %s" % (self.toVirtualAddress(string[0],offsets),repr(string[2]))
                 name = match.rule
                 if name.endswith("_API"):
                     try:
@@ -197,21 +182,20 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
                              + hex(self.toVirtualAddress(string[0], offsets)).lstrip("0x").rstrip("L").upper()
                              , 0)
                 values.append(value)
-        print "<<< end yara search"
+        print("<<< end yara search")
         return values
 
     def _get_memory(self):
-        result = ""
+        result = bytearray()
         segment_starts = [ea for ea in idautils.Segments()]
         offsets = []
         start_len = 0
         for start in segment_starts:
-            end = idc.SegEnd(start)
-            for ea in lrange(start, end):
-                result += chr(idc.Byte(ea))
+            end = idc.get_segm_attr(start, idc.SEGATTR_END)
+            result += ida_bytes.get_bytes(start, end - start)
             offsets.append((start, start_len, len(result)))
             start_len = len(result)
-        return result, offsets
+        return bytes(result), offsets
 
     def run(self, arg):
         self.search()
