@@ -128,11 +128,11 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
             idaapi.register_action(idaapi.action_desc_t(
                 "Findcrypt",
                 "Find crypto constants",
-                self.search,
+                Searcher(),
                 None,
                 None,
                 0))
-            idaapi.attach_action_to_menu("Edit/Findcrypt", "Findcrypt", idaapi.SETMENU_APP)
+            idaapi.attach_action_to_menu("Search", "Findcrypt", idaapi.SETMENU_APP)
             print("=" * 80)
             print("Findcrypt v{0} by David BERARD, 2017".format(VERSION))
             print("Findcrypt search shortcut key is Ctrl-Alt-F")
