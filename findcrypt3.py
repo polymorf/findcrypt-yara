@@ -3,10 +3,12 @@
 import idaapi
 import idautils
 import ida_bytes
+import ida_diskio
 import idc
 import operator
 import yara
 import os
+import glob
 
 VERSION = "0.2"
 YARARULES_CFGFILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "findcrypt3.rules")
@@ -61,7 +63,7 @@ try:
 except:
     pass
 
-	
+
 p_initialized = False
 
 
@@ -72,6 +74,7 @@ class YaraSearchResultChooser(idaapi.Choose):
             title,
             [
                 ["Address", idaapi.Choose.CHCOL_HEX|10],
+                ["Rules file", idaapi.Choose.CHCOL_PLAIN|12],
                 ["Name", idaapi.Choose.CHCOL_PLAIN|25],
                 ["String", idaapi.Choose.CHCOL_PLAIN|25],
                 ["Value", idaapi.Choose.CHCOL_PLAIN|40],
@@ -93,7 +96,7 @@ class YaraSearchResultChooser(idaapi.Choose):
 
     def OnGetLine(self, n):
         res = self.items[n]
-        res = [idc.atoa(res[0]), res[1], res[2], res[3]]
+        res = [idc.atoa(res[0]), res[1], res[2], res[3], res[4]]
         return res
 
     def OnGetSize(self):
@@ -113,7 +116,6 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
     wanted_hotkey = "Ctrl-Alt-F"
     flags = idaapi.PLUGIN_KEEP
 
-
     def init(self):
         global p_initialized
 
@@ -125,6 +127,7 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
 
         if p_initialized is False:
             p_initialized = True
+            self.user_directory = self.get_user_directory()
             idaapi.register_action(idaapi.action_desc_t(
                 "Findcrypt",
                 "Find crypto constants",
@@ -136,7 +139,8 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
             print("=" * 80)
             print("Findcrypt v{0} by David BERARD, 2017".format(VERSION))
             print("Findcrypt search shortcut key is Ctrl-Alt-F")
-            print("Rules in %s" % YARARULES_CFGFILE)
+            print("Global rules in %s" % YARARULES_CFGFILE)
+            print("User-defined rules in %s/*.rules" % self.user_directory)
             print("=" * 80)
 
         return idaapi.PLUGIN_KEEP
@@ -152,9 +156,27 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
                 va_offset = seg[0] + (offset - seg[1])
         return va_offset
 
+
+    def get_user_directory(self):
+        user_dir = ida_diskio.get_user_idadir()
+        plug_dir = os.path.join(user_dir, "plugins")
+        res_dir = os.path.join(plug_dir, "findcrypt-yara")
+        if not os.path.exists(res_dir):
+            os.makedirs(res_dir, 0755)
+        return res_dir
+
+
+    def get_rules_files(self):
+        rules_filepaths = {"global":YARARULES_CFGFILE}
+        for fpath in glob.glob(os.path.join(self.user_directory, "*.rules")):
+            name = os.path.basename(fpath)
+            rules_filepaths.update({name:fpath})
+        return rules_filepaths
+
+
     def search(self):
         memory, offsets = self._get_memory()
-        rules = yara.compile(YARARULES_CFGFILE)
+        rules = yara.compile(filepaths=self.get_rules_files())
         values = self.yarasearch(memory, offsets, rules)
         c = YaraSearchResultChooser("Findcrypt results", values)
         r = c.show()
@@ -173,6 +195,7 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
                         pass
                 value = [
                     self.toVirtualAddress(string[0], offsets),
+                    match.namespace,
                     name + "_" + hex(self.toVirtualAddress(string[0], offsets)).lstrip("0x").rstrip("L").upper(),
                     string[1],
                     repr(string[2]),
