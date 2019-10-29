@@ -162,7 +162,7 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
         plug_dir = os.path.join(user_dir, "plugins")
         res_dir = os.path.join(plug_dir, "findcrypt-yara")
         if not os.path.exists(res_dir):
-            os.makedirs(res_dir, 0755)
+            os.makedirs(res_dir, 0o755)
         return res_dir
 
 
