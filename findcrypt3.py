@@ -158,7 +158,7 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
 
 
     def get_user_directory(self):
-        user_dir = ida_diskio.get_user_idadir()
+        user_dir = ida_diskio.get_user_idadir().decode("utf-8")
         plug_dir = os.path.join(user_dir, "plugins")
         res_dir = os.path.join(plug_dir, "findcrypt-yara")
         if not os.path.exists(res_dir):
