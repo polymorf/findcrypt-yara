@@ -1519,3 +1519,14 @@ rule Sosemanuk
     condition:
         any of them
 }
+
+rule salsa20 {
+	meta:
+		author = "eric"
+		description = "salsa20/chacha20 fixed words"
+		date = "2020-10"
+	strings:
+		$c0 = "expand 32-byte k" ascii
+	condition:
+		$c0
+}
