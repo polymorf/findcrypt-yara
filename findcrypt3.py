@@ -74,6 +74,7 @@ class YaraSearchResultChooser(idaapi.Choose):
             title,
             [
                 ["Address", idaapi.Choose.CHCOL_HEX|10],
+                ["Function", idaapi.Choose.CHCOL_PLAIN|10],
                 ["Rules file", idaapi.Choose.CHCOL_PLAIN|12],
                 ["Name", idaapi.Choose.CHCOL_PLAIN|25],
                 ["String", idaapi.Choose.CHCOL_PLAIN|25],
@@ -181,29 +182,101 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
         c = YaraSearchResultChooser("Findcrypt results", values)
         r = c.show()
 
+    def has_user_name(ea): return (idc.get_full_flags(ea) & idc.FF_ANYNAME) == idc.FF_NAME
+
+    def label_address(self, ea, name, predicate=None, force=False, throw=False):
+        """
+        Label an address with a given name or renaming the previous owner of that name.
+        :param ea: address
+        :param name: desired name [str, callable(address, exiting_name)]
+        :param predicate: optional callback
+        :param force: force name (displace existing name)
+        :param throw: raise exception on error
+        :return: success as bool
+
+        label_address(ea, 'philbert', lambda x, *a: not HasUserName(x))
+
+        `predicate` can also return an int instead of True to specify an
+        alternate address, e.g.
+
+        label_address(ea, 'philbert', lambda x, *a: idc.get_item_head(x))
+        """
+        def ThrowOnFailure(result):
+            if not result and throw:
+                raise RuntimeError("Couldn't label address {:x} with \"{}\"".format(ea, name))
+            return not not result
+
+        def MakeUniqueLabel(name, ea = BADADDR):
+            fnLoc = idc.get_name_ea_simple(name)
+            if fnLoc == BADADDR or fnLoc == ea:
+                return name
+            fmt = "%s_%%i" % name
+            for i in range(1, 99999):
+                tmpName = fmt % i
+                fnLoc = idc.get_name_ea_simple(tmpName)
+                if fnLoc == BADADDR or fnLoc == ea:
+                    return tmpName
+            return ""
+
+
+        if ea < BADADDR:
+            tmp = ea
+            if callable(predicate):
+                tmp  = predicate(ea, idc.get_name(ea, 0))
+            if not tmp:
+                return True
+            # check if name already exists
+            fnLoc = idc.get_name_ea_simple(name)
+            if fnLoc == BADADDR:
+                return ThrowOnFailure(idc.set_name(ea, name, idc.SN_NOWARN))
+            elif fnLoc == ea:
+                return ThrowOnFailure(True)
+            else:
+                if force:
+                    idc.set_name(fnLoc, "", idc.SN_AUTO | idc.SN_NOWARN)
+                    idc.auto_wait()
+                    return ThrowOnFailure(idc.set_name(ea, name, idc.SN_NOWARN))
+                else:
+                    name = MakeUniqueLabel(name, ea)
+                    return ThrowOnFailure(idc.set_name(ea, name, idc.SN_NOWARN))
+
+        else:
+            print("0x0%0x: Couldn't label %s, BADADDR" % (ea, name))
+            return False
+
+
     def yarasearch(self, memory, offsets, rules):
+        def pred(ea, name):
+            head = idc.get_item_head(ea)
+            if IsCode_(head):
+                return head
+            if IsData(head):
+                return head
+            if IsUnknown(head):
+                return False
+            return False
         print(">>> start yara search")
         values = list()
         matches = rules.match(data=memory)
         for match in matches:
             for string in match.strings:
+                ea = self.toVirtualAddress(string[0], offsets)
                 name = match.rule
                 if name.endswith("_API"):
                     try:
-                        name = name + "_" + idc.GetString(self.toVirtualAddress(string[0], offsets))
+                        name = name + "_" + idc.GetString(ea)
                     except:
                         pass
                 value = [
-                    self.toVirtualAddress(string[0], offsets),
+                    ea,
+                    GetFuncName(ea),
                     match.namespace,
-                    name + "_" + hex(self.toVirtualAddress(string[0], offsets)).lstrip("0x").rstrip("L").upper(),
+                    name + "_" + hex(ea).lstrip("0x").rstrip("L").upper(),
                     string[1],
                     repr(string[2]),
                 ]
-                idaapi.set_name(value[0], name
-                             + "_"
-                             + hex(self.toVirtualAddress(string[0], offsets)).lstrip("0x").rstrip("L").upper()
-                             , 0)
+                label = name + "_" + hex(ea).lstrip("0x").rstrip("L").upper()
+                self.label_address(value[0], label, predicate=pred)
                 values.append(value)
         print("<<< end yara search")
         return values
@@ -227,3 +300,22 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
 # register IDA plugin
 def PLUGIN_ENTRY():
     return Findcrypt_Plugin_t()
+
+_load_method = None
+if __name__ == "__main__":
+    # loaded directly
+    _load_method = 'direct'
+elif __name__.startswith("__plugins__"):
+    _load_method = 'plugin'
+    # loaded as a plugin
+elif __name__ == "findcrypt3":
+    _load_method = 'module'
+else:
+    # unknown load method (filename could be changed?)
+    _load_method = 'unknown'
+    print("[findcrypt3]: unknown load method '{}'".format(__name__))
+
+if _load_method == 'direct':
+    fcp = Findcrypt_Plugin_t()
+    fcp.init()
+    fcp.run(0)
