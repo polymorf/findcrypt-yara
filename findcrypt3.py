@@ -187,24 +187,25 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
         matches = rules.match(data=memory)
         for match in matches:
             for string in match.strings:
-                name = match.rule
-                if name.endswith("_API"):
-                    try:
-                        name = name + "_" + idc.GetString(self.toVirtualAddress(string[0], offsets))
-                    except:
-                        pass
-                value = [
-                    self.toVirtualAddress(string[0], offsets),
-                    match.namespace,
-                    name + "_" + hex(self.toVirtualAddress(string[0], offsets)).lstrip("0x").rstrip("L").upper(),
-                    string[1],
-                    repr(string[2]),
-                ]
-                idaapi.set_name(value[0], name
+                for instance in string.instances:
+                    name = match.rule
+                    if name.endswith("_API"):
+                        try:
+                            name = name + "_" + idc.GetString(self.toVirtualAddress(instance.offset, offsets))
+                        except:
+                            pass
+                    value = [
+                        self.toVirtualAddress(instance.offset, offsets),
+                        match.namespace,
+                        name + "_" + hex(self.toVirtualAddress(instance.offset, offsets)).lstrip("0x").rstrip("L").upper(),
+                        string.identifier,
+                        repr(instance.matched_data),
+                    ]
+                    idaapi.set_name(value[0], name
                              + "_"
-                             + hex(self.toVirtualAddress(string[0], offsets)).lstrip("0x").rstrip("L").upper()
+                             + hex(self.toVirtualAddress(instance.offset, offsets)).lstrip("0x").rstrip("L").upper()
                              , 0)
-                values.append(value)
+                    values.append(value)
         print("<<< end yara search")
         return values
 
