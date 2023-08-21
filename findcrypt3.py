@@ -185,26 +185,26 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
         print(">>> start yara search")
         values = list()
         matches = rules.match(data=memory)
-        for MatchObj in matches:
-            for StringMatch in MatchObj.strings:
-                name = MatchObj.rule
-                for StringMatchInstance in StringMatch.instances:
+        for matchobj in matches:
+            for strn_matchobj in matchobj.strings:
+                name = matchobj.rule
+                for strn_matchobj_inst in strn_matchobj.instances:
                     if name.endswith("_API"):
                         try:
-                            name = name + "_" + idc.GetString(self.toVirtualAddress(StringMatchInstance.offset, offsets))
+                            name = name + "_" + idc.GetString(self.toVirtualAddress(strn_matchobj_inst.offset, offsets))
                         except:
                             pass
                     value = [
-                        self.toVirtualAddress(StringMatchInstance.offset, offsets),
-                        MatchObj.namespace,
-                        name + "_" + hex(self.toVirtualAddress(StringMatchInstance.offset, offsets)).lstrip("0x").rstrip("L").upper(),
-                        StringMatch.identifier,
-                        repr(StringMatchInstance.matched_data)
+                        self.toVirtualAddress(strn_matchobj_inst.offset, offsets),
+                        matchobj.namespace,
+                        name + "_" + hex(self.toVirtualAddress(strn_matchobj_inst.offset, offsets)).lstrip("0x").rstrip("L").upper(),
+                        strn_matchobj.identifier,
+                        repr(strn_matchobj_inst.matched_data)
                     ]
 
                     idaapi.set_name(value[0], name
                         + "_"
-                        + hex(self.toVirtualAddress(StringMatchInstance.offset, offsets)).lstrip("0x").rstrip("L").upper()
+                        + hex(self.toVirtualAddress(strn_matchobj_inst.offset, offsets)).lstrip("0x").rstrip("L").upper()
                         , 0)
                     values.append(value)
         print("<<< end yara search")
