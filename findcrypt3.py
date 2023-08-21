@@ -185,26 +185,28 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
         print(">>> start yara search")
         values = list()
         matches = rules.match(data=memory)
-        for match in matches:
-            for string in match.strings:
-                name = match.rule
-                if name.endswith("_API"):
-                    try:
-                        name = name + "_" + idc.GetString(self.toVirtualAddress(string[0], offsets))
-                    except:
-                        pass
-                value = [
-                    self.toVirtualAddress(string[0], offsets),
-                    match.namespace,
-                    name + "_" + hex(self.toVirtualAddress(string[0], offsets)).lstrip("0x").rstrip("L").upper(),
-                    string[1],
-                    repr(string[2]),
-                ]
-                idaapi.set_name(value[0], name
-                             + "_"
-                             + hex(self.toVirtualAddress(string[0], offsets)).lstrip("0x").rstrip("L").upper()
-                             , 0)
-                values.append(value)
+        for MatchObj in matches:
+            for StringMatch in MatchObj.strings:
+                name = MatchObj.rule
+                for StringMatchInstance in StringMatch.instances:
+                    if name.endswith("_API"):
+                        try:
+                            name = name + "_" + idc.GetString(self.toVirtualAddress(StringMatchInstance.offset, offsets))
+                        except:
+                            pass
+                    value = [
+                        self.toVirtualAddress(StringMatchInstance.offset, offsets),
+                        MatchObj.namespace,
+                        name + "_" + hex(self.toVirtualAddress(StringMatchInstance.offset, offsets)).lstrip("0x").rstrip("L").upper(),
+                        StringMatch.identifier,
+                        repr(StringMatchInstance.matched_data)
+                    ]
+
+                    idaapi.set_name(value[0], name
+                        + "_"
+                        + hex(self.toVirtualAddress(StringMatchInstance.offset, offsets)).lstrip("0x").rstrip("L").upper()
+                        , 0)
+                    values.append(value)
         print("<<< end yara search")
         return values
 
