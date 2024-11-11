@@ -78,6 +78,7 @@ class YaraSearchResultChooser(idaapi.Choose):
                 ["Name", idaapi.Choose.CHCOL_PLAIN|25],
                 ["String", idaapi.Choose.CHCOL_PLAIN|25],
                 ["Value", idaapi.Choose.CHCOL_PLAIN|40],
+                ["Hex", idaapi.Choose.CHCOL_PLAIN|45],
             ],
             flags=flags,
             width=width,
@@ -96,7 +97,7 @@ class YaraSearchResultChooser(idaapi.Choose):
 
     def OnGetLine(self, n):
         res = self.items[n]
-        res = [idc.atoa(res[0]), res[1], res[2], res[3], res[4]]
+        res = [idc.atoa(res[0]), res[1], res[2], res[3], res[4], res[5]]
         return res
 
     def OnGetSize(self):
@@ -200,6 +201,7 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
                         name + "_" + hex(self.toVirtualAddress(instance.offset, offsets)).lstrip("0x").rstrip("L").upper(),
                         string.identifier,
                         repr(instance.matched_data),
+                        instance.matched_data.hex().upper(),
                     ]
                     idaapi.set_name(value[0], name
                              + "_"
