@@ -1519,6 +1519,18 @@ rule TEA_SUM {
 		any of them
 }
 
+rule WellRNG512 {
+	meta:
+		author = "golem"
+		description = "Well512 Rng Constant"
+		date = "2024-11"
+	strings:
+		$c0 = { 24 2D 44 DA }
+		$c1 = { 20 2D 44 DA }
+	condition:
+		any of them
+}
+
 rule Sosemanuk
 {
     /* Notes:
