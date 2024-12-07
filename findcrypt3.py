@@ -4,13 +4,15 @@ import idaapi
 import idautils
 import ida_bytes
 import ida_diskio
+import ida_segment
+import ida_kernwin
 import idc
 import operator
 import yara
 import os
 import glob
 
-VERSION = "0.2"
+VERSION = "0.3"
 YARARULES_CFGFILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "findcrypt3.rules")
 
 try:
@@ -57,7 +59,7 @@ try:
 
     class Searcher(Kp_Menu_Context):
         def activate(self, ctx):
-            self.plugin.search()
+            self.plugin.search(ctx.action)
             return 1
 
 except:
@@ -136,7 +138,15 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
                 None,
                 None,
                 0))
+            idaapi.register_action(idaapi.action_desc_t(
+                "Findcrypt segment",
+                "Find crypto constants (current segment)",
+                Searcher(),
+                None,
+                None,
+                0))
             idaapi.attach_action_to_menu("Search", "Findcrypt", idaapi.SETMENU_APP)
+            idaapi.attach_action_to_menu("Search", "Findcrypt segment", idaapi.SETMENU_APP)
             print("=" * 80)
             print("Findcrypt v{0} by David BERARD, 2017".format(VERSION))
             print("Findcrypt search shortcut key is Ctrl-Alt-F")
@@ -175,8 +185,8 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
         return rules_filepaths
 
 
-    def search(self):
-        memory, offsets = self._get_memory()
+    def search(self, action):
+        memory, offsets = self._get_memory(action)
         rules = yara.compile(filepaths=self.get_rules_files())
         values = self.yarasearch(memory, offsets, rules)
         c = YaraSearchResultChooser("Findcrypt results", values)
@@ -211,11 +221,19 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
         print("<<< end yara search")
         return values
 
-    def _get_memory(self):
+    def _get_memory(self, action):
         result = bytearray()
-        segment_starts = [ea for ea in idautils.Segments()]
         offsets = []
         start_len = 0
+        
+        screen_ea = ida_kernwin.get_screen_ea()
+        current_segment = ida_segment.get_segm_num(screen_ea)
+        
+        if action == "Findcrypt segment" and current_segment >= 0:
+            segment_starts = [ida_segment.getseg(screen_ea).start_ea]
+        else:
+            segment_starts = [ea for ea in idautils.Segments()]
+
         for start in segment_starts:
             end = idc.get_segm_attr(start, idc.SEGATTR_END)
             result += ida_bytes.get_bytes(start, end - start)
