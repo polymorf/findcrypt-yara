@@ -12,7 +12,7 @@ import yara
 import os
 import glob
 
-VERSION = "0.2"
+VERSION = "0.3"
 YARARULES_CFGFILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "findcrypt3.rules")
 
 try:
