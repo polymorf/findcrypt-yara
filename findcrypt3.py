@@ -168,7 +168,9 @@ class Findcrypt_Plugin_t(idaapi.plugin_t):
 
 
     def get_rules_files(self):
-        rules_filepaths = {"global":YARARULES_CFGFILE}
+        rules_filepaths = {}
+        if os.path.exists(YARARULES_CFGFILE):
+            rules_filepaths.update({"global":YARARULES_CFGFILE})
         for fpath in glob.glob(os.path.join(self.user_directory, "*.rules")):
             name = os.path.basename(fpath)
             rules_filepaths.update({name:fpath})
